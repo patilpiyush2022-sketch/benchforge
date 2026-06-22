@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BenchForge — PC Performance Tester</title>
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0e1420;
+    --surface2: #141c2e;
+    --border: rgba(99,161,255,0.15);
+    --accent: #3d8bff;
+    --accent2: #00e5c3;
+    --accent3: #ff5e5e;
+    --text: #e8edf5;
+    --muted: #6b7a99;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+    background: rgba(8,11,18,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .logo span { color: var(--accent2); }
+  nav ul {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  /* HERO */
+  #hero {
+    position: relative;
+    height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    overflow: hidden;
+  }
+  #three-canvas {
+    position: absolute; inset: 0;
+    z-index: 0;
+  }
+  .hero-content {
+    position: relative; z-index: 1;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+  .btn-primary {
+    display: inline-block;
+    padding: 0.9rem 2.5rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(61,139,255,0.4);
+  }
+  .scroll-hint {
+    position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+    z-index: 1; color: var(--muted); font-size: 0.8rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    animation: bounce 2s infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* SECTIONS */
+  section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+  .section-desc {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 560px;
+    margin-bottom: 3rem;
+  }
+
+  /* BENCHMARK CARDS */
+  .bench-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .bench-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .bench-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .bench-card.running::before { transform: scaleX(1); animation: progress-line 2s linear infinite; }
+  .bench-card.done::before { transform: scaleX(1); background: var(--accent2); }
+  @keyframes progress-line { 0% { transform: scaleX(0) translateX(0); } 100% { transform: scaleX(1) translateX(0); } }
+  .bench-icon {
+    width: 40px; height: 40px;
+    background: rgba(61,139,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .bench-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+  .bench-score {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .bench-score.pending { color: var(--muted); font-size: 1.2rem; }
+  .bench-unit {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .bench-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bench-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1.2s ease;
+  }
+  .bench-card.done .bench-bar-fill { background: var(--accent2); }
+  .bench-status {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    font-family: var(--mono);
+  }
+  .bench-card.running .bench-status { color: var(--accent); animation: pulse 1.5s infinite; }
+  .bench-card.done .bench-status { color: var(--accent2); }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  /* CONTROL ROW */
+  .controls {
+    display: flex; gap: 1rem; align-items: center; margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  .btn-run {
+    padding: 0.8rem 2rem;
+    background: var(--accent);
+    color: #fff;
+    border: none; border-radius: 6px;
+    font-size: 0.95rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .btn-run:hover { background: #2b7aee; transform: translateY(-1px); }
+  .btn-run:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: rgba(99,161,255,0.4); }
+  .overall-score {
+    margin-left: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .overall-label { font-size: 0.75rem; color: var(--muted); }
+  .overall-value {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  /* LOG */
+  .log-section { margin-top: 2rem; }
+  .log-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .log-title { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  #log-output {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    height: 160px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+  #log-output .log-ok { color: var(--accent2); }
+  #log-output .log-info { color: var(--accent); }
+  #log-output .log-warn { color: #f0c040; }
+
+  /* GPU CANVAS */
+  #gpu-test-canvas {
+    border-radius: 8px;
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    height: 200px;
+    margin-top: 1rem;
+    border: 1px solid var(--border);
+  }
+
+  /* RESULTS CHART */
+  .results-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-top: 2rem;
+    display: none;
+  }
+  .results-title {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.25rem;
+  }
+  .radar-bar-row {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .radar-label { font-size: 0.8rem; width: 80px; color: var(--muted); flex-shrink: 0; }
+  .radar-track {
+    flex: 1; height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .radar-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .radar-val { font-family: var(--mono); font-size: 0.8rem; width: 60px; text-align: right; color: var(--text); }
+
+  /* SYSTEM INFO */
+  .sysinfo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .sysinfo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .sysinfo-key {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .sysinfo-val {
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+
+  /* RATING BADGE */
+  .rating-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 99px;
+    font-size: 0.8rem; font-weight: 600;
+    border: 1px solid;
+  }
+  .rating-s { background: rgba(0,229,195,0.1); color: var(--accent2); border-color: rgba(0,229,195,0.3); }
+  .rating-a { background: rgba(61,139,255,0.1); color: var(--accent); border-color: rgba(61,139,255,0.3); }
+  .rating-b { background: rgba(240,192,64,0.1); color: #f0c040; border-color: rgba(240,192,64,0.3); }
+  .rating-c { background: rgba(255,94,94,0.1); color: var(--accent3); border-color: rgba(255,94,94,0.3); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  /* TOOLTIP */
+  .tooltip { position: relative; display: inline-block; cursor: help; }
+  .tooltip .tip {
+    display: none;
+    position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
+    color: var(--text);
+  }
+  .tooltip:hover .tip { display: block; }
+
+  /* SHARE / EXPORT */
+  .share-row {
+    display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;
+  }
+  .btn-export {
+    padding: 0.6rem 1.25rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-export:hover { color: var(--text); border-color: rgba(99,161,255,0.4); }
+
+  /* LEADERBOARD */
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+  }
+  .leaderboard-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .leaderboard-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(99,161,255,0.06);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .leaderboard-table tr:last-child td { border-bottom: none; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .rank-1 { background: rgba(240,192,64,0.2); color: #f0c040; }
+  .rank-2 { background: rgba(180,180,200,0.2); color: #b4b4c8; }
+  .rank-3 { background: rgba(200,120,60,0.2); color: #c8783c; }
+  .rank-n { background: var(--surface2); color: var(--muted); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: #2a3a55; border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    nav ul { display: none; }
+    h1 { font-size: 2.2rem; }
+    section { padding: 4rem 1.25rem; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .overall-score { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Bench<span>Forge</span></div>
+  <ul>
+    <li><a href="#benchmark">Benchmark</a></li>
+    <li><a href="#system">System</a></li>
+    <li><a href="#leaderboard">Leaderboard</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="max-width:none;padding:0;">
+  <canvas id="three-canvas"></canvas>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Browser-based · No install needed · Free</p>
+    <h1>Know Your<br>Machine's Limits</h1>
+    <p class="hero-sub">Benchmark CPU, GPU, memory, and storage directly in your browser. No downloads, no accounts, instant results.</p>
+    <a href="#benchmark" class="btn-primary">Start Benchmark →</a>
+  </div>
+  <div class="scroll-hint">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    scroll
+  </div>
+</section>
+
+<!-- BENCHMARK -->
+<section id="benchmark">
+  <p class="section-label">Performance Tests</p>
+  <h2>Run Your Benchmark</h2>
+  <p class="section-desc">Each test stresses a different subsystem. Run all tests or pick individual ones. Results are scored 0–10,000 and rated S / A / B / C.</p>
+
+  <div class="controls">
+    <button class="btn-run" id="run-all-btn" onclick="runAllBenchmarks()">
+      <span id="run-icon">▶</span> Run All Tests
+    </button>
+    <button class="btn-secondary" onclick="resetAll()">↺ Reset</button>
+    <div class="overall-score">
+      <span class="overall-label">Overall Score</span>
+      <span class="overall-value" id="total-score">—</span>
+    </div>
+  </div>
+
+  <div class="bench-grid">
+    <!-- CPU -->
+    <div class="bench-card" id="card-cpu">
+      <div class="bench-icon">🧮</div>
+      <div class="bench-name">CPU · Integer</div>
+      <div class="bench-score pending" id="score-cpu">—</div>
+      <div class="bench-unit" id="unit-cpu">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-cpu"></div></div>
+      <div class="bench-status" id="status-cpu">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('cpu')">Run solo</button>
+    </div>
+
+    <!-- FLOAT -->
+    <div class="bench-card" id="card-float">
+      <div class="bench-icon">📐</div>
+      <div class="bench-name">CPU · Float</div>
+      <div class="bench-score pending" id="score-float">—</div>
+      <div class="bench-unit" id="unit-float">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-float"></div></div>
+      <div class="bench-status" id="status-float">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('float')">Run solo</button>
+    </div>
+
+    <!-- MEMORY -->
+    <div class="bench-card" id="card-mem">
+      <div class="bench-icon">🧠</div>
+      <div class="bench-name">Memory</div>
+      <div class="bench-score pending" id="score-mem">—</div>
+      <div class="bench-unit" id="unit-mem">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-mem"></div></div>
+      <div class="bench-status" id="status-mem">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('mem')">Run solo</button>
+    </div>
+
+    <!-- GPU -->
+    <div class="bench-card" id="card-gpu">
+      <div class="bench-icon">🎮</div>
+      <div class="bench-name">GPU · Canvas</div>
+      <div class="bench-score pending" id="score-gpu">—</div>
+      <div class="bench-unit" id="unit-gpu">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-gpu"></div></div>
+      <div class="bench-status" id="status-gpu">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('gpu')">Run solo</button>
+    </div>
+
+    <!-- STORAGE -->
+    <div class="bench-card" id="card-storage">
+      <div class="bench-icon">💾</div>
+      <div class="bench-name">Storage</div>
+      <div class="bench-score pending" id="score-storage">—</div>
+      <div class="bench-unit" id="unit-storage">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-storage"></div></div>
+      <div class="bench-status" id="status-storage">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('storage')">Run solo</button>
+    </div>
+
+    <!-- CRYPTO -->
+    <div class="bench-card" id="card-crypto">
+      <div class="bench-icon">🔐</div>
+      <div class="bench-name">Crypto / Hash</div>
+      <div class="bench-score pending" id="score-crypto">—</div>
+      <div class="bench-unit" id="unit-crypto">pts</div>
+      <div class="bench-bar"><div class="bench-bar-fill" id="bar-crypto"></div></div>
+      <div class="bench-status" id="status-crypto">Waiting</div>
+      <br>
+      <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('crypto')">Run solo</button>
+    </div>
+  </div>
+
+  <!-- GPU test canvas (hidden) -->
+  <canvas id="gpu-test-canvas"></canvas>
+
+  <!-- LOG -->
+  <div class="log-section">
+    <div class="log-header">
+      <span class="log-title">⬛ Test Log</span>
+      <button class="btn-export" onclick="clearLog()">Clear</button>
+    </div>
+    <div id="log-output"><span class="log-info">[BenchForge] Ready. Click Run All Tests to begin.</span></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section" id="results-section">
+    <div class="results-title">Score Breakdown</div>
+    <div id="radar-bars"></div>
+    <div class="share-row">
+      <span id="rating-display"></span>
+      <button class="btn-export" onclick="copyResults()">📋 Copy Results</button>
+      <button class="btn-export" onclick="shareResults()">🔗 Share Link</button>
+      <button class="btn-export" onclick="addToLeaderboard()">🏆 Submit Score</button>
+    </div>
+  </div>
+</section>
+
+<!-- SYSTEM INFO -->
+<section id="system" style="border-top: 1px solid var(--border);">
+  <p class="section-label">System</p>
+  <h2>Detected Hardware</h2>
+  <p class="section-desc">Information extracted from your browser environment. Some values are estimated due to browser security sandboxing.</p>
+  <div class="sysinfo-grid" id="sysinfo-grid">
+    <!-- populated by JS -->
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard" style="border-top: 1px solid var(--border);">
+  <p class="section-label">Leaderboard</p>
+  <h2>Top Scores</h2>
+  <p class="section-desc">Scores submitted by users in this session. Submit your score after benchmarking to appear here.</p>
+  <table class="leaderboard-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Device</th>
+        <th>CPU Score</th>
+        <th>GPU Score</th>
+        <th>Total</th>
+        <th>Rating</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body">
+      <!-- populated by JS -->
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <strong style="color:var(--text)">BenchForge</strong> · Browser-based PC Benchmarking · No data leaves your browser<br>
+  Deploy free on <a href="https://netlify.com" style="color:var(--accent);text-decoration:none">Netlify</a>,
+  <a href="https://vercel.com" style="color:var(--accent);text-decoration:none">Vercel</a>, or
+  <a href="https://pages.github.com" style="color:var(--accent);text-decoration:none">GitHub Pages</a> — just drop the index.html file.
+</footer>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ─── 3D HERO SCENE ───────────────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  // Grid
+  const gridHelper = new THREE.GridHelper(30, 40, 0x1a2840, 0x0e1820);
+  gridHelper.position.y = -2.5;
+  scene.add(gridHelper);
+
+  // Floating wireframe torus
+  const torusGeo = new THREE.TorusKnotGeometry(1.3, 0.35, 128, 32);
+  const torusMat = new THREE.MeshBasicMaterial({ color: 0x3d8bff, wireframe: true, opacity: 0.3, transparent: true });
+  const torus = new THREE.Mesh(torusGeo, torusMat);
+  scene.add(torus);
+
+  // Inner solid torus (accent)
+  const torusGeo2 = new THREE.TorusKnotGeometry(1.3, 0.12, 128, 32);
+  const torusMat2 = new THREE.MeshBasicMaterial({ color: 0x00e5c3, opacity: 0.15, transparent: true });
+  const torus2 = new THREE.Mesh(torusGeo2, torusMat2);
+  scene.add(torus2);
+
+  // Particles
+  const pCount = 600;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount * 3; i++) pPos[i] = (Math.random() - 0.5) * 20;
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({ color: 0x3d8bff, size: 0.04, opacity: 0.6, transparent: true });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  // Ambient rings
+  for (let i = 0; i < 3; i++) {
+    const rGeo = new THREE.TorusGeometry(2.2 + i * 0.5, 0.01, 2, 64);
+    const rMat = new THREE.MeshBasicMaterial({ color: [0x3d8bff, 0x00e5c3, 0x5540ff][i], opacity: 0.12, transparent: true });
+    const ring = new THREE.Mesh(rGeo, rMat);
+    ring.rotation.x = Math.PI / 2 + i * 0.3;
+    scene.add(ring);
+  }
+
+  let frame = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    frame++;
+    torus.rotation.x += 0.004;
+    torus.rotation.y += 0.006;
+    torus2.rotation.x -= 0.003;
+    torus2.rotation.z += 0.005;
+    particles.rotation.y += 0.0005;
+    renderer.render(scene, camera);
+  }
+
+  function resize() {
+    renderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  animate();
+
+  // Mouse parallax
+  document.addEventListener('mousemove', e => {
+    const x = (e.clientX / innerWidth - 0.5) * 0.8;
+    const y = (e.clientY / innerHeight - 0.5) * -0.5;
+    camera.position.x += (x - camera.position.x) * 0.04;
+    camera.position.y += (y - camera.position.y) * 0.04;
+    camera.lookAt(0, 0, 0);
+  });
+})();
+
+// ─── SYSTEM INFO ─────────────────────────────────────────────────────────────
+function getSystemInfo() {
+  const nav = navigator;
+  const info = [
+    ['Browser', nav.userAgent.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)?.[0] || nav.userAgent.slice(0,40)],
+    ['Platform', nav.platform || navigator.userAgentData?.platform || 'Unknown'],
+    ['CPU Cores', navigator.hardwareConcurrency || 'Unknown'],
+    ['Device Memory', navigator.deviceMemory ? navigator.deviceMemory + ' GB (estimated)' : 'Unknown'],
+    ['Screen', `${screen.width}×${screen.height} @ ${screen.colorDepth}bpp`],
+    ['GPU (WebGL)', getGPUInfo()],
+    ['Language', nav.language],
+    ['Connection', navigator.connection?.effectiveType || 'Unknown'],
+    ['Timezone', Intl.DateTimeFormat().resolvedOptions().timeZone],
+    ['JS Engine', detectJSEngine()],
+    ['WebGL2', !!document.createElement('canvas').getContext('webgl2') ? 'Supported ✓' : 'Not supported'],
+    ['WebAssembly', typeof WebAssembly === 'object' ? 'Supported ✓' : 'Not supported'],
+  ];
+  const grid = document.getElementById('sysinfo-grid');
+  grid.innerHTML = info.map(([k, v]) => `
+    <div class="sysinfo-item">
+      <div class="sysinfo-key">${k}</div>
+      <div class="sysinfo-val">${v}</div>
+    </div>
+  `).join('');
+}
+
+function getGPUInfo() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return 'Unknown';
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    if (ext) {
+      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      return renderer.replace(/ANGLE \(/, '').replace(/\)/, '') || 'Unknown';
+    }
+    return 'WebGL OK (renderer masked)';
+  } catch(e) { return 'Unknown'; }
+}
+
+function detectJSEngine() {
+  if (/Chrome/.test(navigator.userAgent)) return 'V8 (Chrome)';
+  if (/Firefox/.test(navigator.userAgent)) return 'SpiderMonkey';
+  if (/Safari/.test(navigator.userAgent)) return 'JavaScriptCore';
+  return 'Unknown';
+}
+
+getSystemInfo();
+
+// ─── LOGGING ─────────────────────────────────────────────────────────────────
+function log(msg, type = 'info') {
+  const el = document.getElementById('log-output');
+  const ts = new Date().toLocaleTimeString();
+  const cls = { ok: 'log-ok', info: 'log-info', warn: 'log-warn' }[type] || '';
+  el.innerHTML += `\n<span class="${cls}">[${ts}] ${msg}</span>`;
+  el.scrollTop = el.scrollHeight;
+}
+function clearLog() {
+  document.getElementById('log-output').innerHTML = '<span class="log-info">[BenchForge] Log cleared.</span>';
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const scores = { cpu: 0, float: 0, mem: 0, gpu: 0, storage: 0, crypto: 0 };
+const maxScores = { cpu: 10000, float: 10000, mem: 10000, gpu: 10000, storage: 10000, crypto: 10000 };
+let running = false;
+
+// Seed leaderboard
+const leaderboard = [
+  { device: 'MacBook Pro M3 Max', cpu: 9800, gpu: 9200, total: 9500, rating: 'S' },
+  { device: 'ASUS ROG Strix (i9-13900)', cpu: 9500, gpu: 9600, total: 9550, rating: 'S' },
+  { device: 'Dell XPS 15 (i7-13700H)', cpu: 8800, gpu: 7400, total: 8100, rating: 'A' },
+  { device: 'ThinkPad X1 Carbon (i7)', cpu: 7200, gpu: 5800, total: 6500, rating: 'B' },
+  { device: 'Surface Pro 9 (i5)', cpu: 6400, gpu: 5200, total: 5800, rating: 'B' },
+];
+
+function renderLeaderboard() {
+  const sorted = [...leaderboard].sort((a, b) => b.total - a.total);
+  const ratingColor = { S: '#00e5c3', A: '#3d8bff', B: '#f0c040', C: '#ff5e5e' };
+  document.getElementById('leaderboard-body').innerHTML = sorted.map((row, i) => {
+    const rankClass = i < 3 ? `rank-${i+1}` : 'rank-n';
+    return `
+      <tr>
+        <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+        <td style="font-family:var(--font);color:var(--text)">${row.device}</td>
+        <td>${row.cpu.toLocaleString()}</td>
+        <td>${row.gpu.toLocaleString()}</td>
+        <td style="color:var(--accent2);font-weight:700">${row.total.toLocaleString()}</td>
+        <td><span style="color:${ratingColor[row.rating]};font-weight:700">${row.rating}</span></td>
+      </tr>`;
+  }).join('');
+}
+renderLeaderboard();
+
+// ─── BENCHMARK ENGINE ─────────────────────────────────────────────────────────
+function setCardState(id, state) {
+  const card = document.getElementById('card-' + id);
+  card.className = 'bench-card ' + state;
+}
+
+function setScore(id, score, unit, pct) {
+  const el = document.getElementById('score-' + id);
+  el.textContent = score.toLocaleString();
+  el.className = 'bench-score';
+  document.getElementById('unit-' + id).textContent = unit;
+  setTimeout(() => {
+    document.getElementById('bar-' + id).style.width = Math.min(pct, 100) + '%';
+  }, 100);
+}
+
+function setStatus(id, msg) {
+  document.getElementById('status-' + id).textContent = msg;
+}
+
+// Sleep helper
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ─ CPU Integer Benchmark ─
+async function benchCPU() {
+  setCardState('cpu', 'running');
+  setStatus('cpu', '● Running...');
+  log('CPU Integer test started');
+  await sleep(50);
+  const start = performance.now();
+  let n = 0n;
+  const limit = 2000000n;
+  for (let i = 0n; i < limit; i++) { n += i * 3n - i / 2n; }
+  const elapsed = performance.now() - start;
+  const score = Math.round(Math.max(100, Math.min(10000, 1_200_000 / elapsed)));
+  scores.cpu = score;
+  setScore('cpu', score, 'pts', score / 100);
+  setStatus('cpu', `✓ Done · ${elapsed.toFixed(0)}ms`);
+  setCardState('cpu', 'done');
+  log(`CPU Integer: ${score.toLocaleString()} pts (${elapsed.toFixed(0)}ms)`, 'ok');
+  return score;
+}
+
+// ─ CPU Float Benchmark ─
+async function benchFloat() {
+  setCardState('float', 'running');
+  setStatus('float', '● Running...');
+  log('CPU Float test started');
+  await sleep(50);
+  const start = performance.now();
+  let n = 1.0;
+  for (let i = 0; i < 5_000_000; i++) {
+    n = Math.sqrt(n * 1.00001 + Math.sin(i * 0.00001));
+  }
+  const elapsed = performance.now() - start;
+  const score = Math.round(Math.max(100, Math.min(10000, 1_400_000 / elapsed)));
+  scores.float = score;
+  setScore('float', score, 'pts', score / 100);
+  setStatus('float', `✓ Done · ${elapsed.toFixed(0)}ms`);
+  setCardState('float', 'done');
+  log(`CPU Float: ${score.toLocaleString()} pts (${elapsed.toFixed(0)}ms)`, 'ok');
+  return score;
+}
+
+// ─ Memory Bandwidth Benchmark ─
+async function benchMemory() {
+  setCardState('mem', 'running');
+  setStatus('mem', '● Running...');
+  log('Memory bandwidth test started');
+  await sleep(50);
+  const SIZE = 10_000_000;
+  const arr = new Float64Array(SIZE);
+  const start = performance.now();
+  for (let i = 0; i < SIZE; i++) arr[i] = i * 1.1;
+  let sum = 0;
+  for (let i = 0; i < SIZE; i++) sum += arr[i];
+  const elapsed = performance.now() - start;
+  const mbps = Math.round((SIZE * 8 * 2) / (elapsed / 1000) / 1_000_000);
+  const score = Math.round(Math.max(100, Math.min(10000, mbps * 0.7)));
+  scores.mem = score;
+  setScore('mem', score, 'pts', score / 100);
+  setStatus('mem', `✓ Done · ${mbps.toLocaleString()} MB/s`);
+  setCardState('mem', 'done');
+  log(`Memory: ${score.toLocaleString()} pts (${mbps.toLocaleString()} MB/s)`, 'ok');
+  return score;
+}
+
+// ─ GPU Canvas Benchmark ─
+async function benchGPU() {
+  setCardState('gpu', 'running');
+  setStatus('gpu', '● Running...');
+  log('GPU Canvas test started');
+  await sleep(50);
+  const canvas = document.getElementById('gpu-test-canvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) {
+    // Fallback to 2D canvas test
+    const c = document.createElement('canvas');
+    c.width = 1024; c.height = 1024;
+    const ctx = c.getContext('2d');
+    const start = performance.now();
+    for (let i = 0; i < 3000; i++) {
+      ctx.fillStyle = `hsl(${i},70%,50%)`;
+      ctx.beginPath();
+      ctx.arc(Math.random()*1024, Math.random()*1024, Math.random()*30+2, 0, Math.PI*2);
+      ctx.fill();
+    }
+    const elapsed = performance.now() - start;
+    const score = Math.round(Math.max(100, Math.min(10000, 2_000_000 / elapsed)));
+    scores.gpu = score;
+    setScore('gpu', score, 'pts', score / 100);
+    setStatus('gpu', `✓ Done (2D fallback) · ${elapsed.toFixed(0)}ms`);
+    setCardState('gpu', 'done');
+    log(`GPU (2D Canvas): ${score.toLocaleString()} pts`, 'ok');
+    return score;
+  }
+
+  // WebGL triangle fill rate test
+  canvas.width = 512; canvas.height = 512;
+  const vs = `attribute vec2 p; void main(){ gl_Position=vec4(p,0,1); }`;
+  const fs = `precision mediump float; uniform float t; void main(){ gl_FragColor=vec4(sin(t),cos(t),0.5,1); }`;
+  const vsh = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vsh, vs); gl.compileShader(vsh);
+  const fsh = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fsh, fs); gl.compileShader(fsh);
+  const prog = gl.createProgram(); gl.attachShader(prog, vsh); gl.attachShader(prog, fsh); gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1,-1,1,1,-1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const tLoc = gl.getUniformLocation(prog, 't');
+  const FRAMES = 200;
+  const start = performance.now();
+  for (let i = 0; i < FRAMES; i++) {
+    gl.uniform1f(tLoc, i * 0.05);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.flush();
+  }
+  const elapsed = performance.now() - start;
+  const fps = Math.round(FRAMES / (elapsed / 1000));
+  const score = Math.round(Math.max(100, Math.min(10000, fps * 8)));
+  scores.gpu = score;
+  setScore('gpu', score, 'pts', score / 100);
+  setStatus('gpu', `✓ Done · ${fps} fps`);
+  setCardState('gpu', 'done');
+  log(`GPU (WebGL): ${score.toLocaleString()} pts (${fps} fps)`, 'ok');
+  return score;
+}
+
+// ─ Storage / IndexedDB Benchmark ─
+async function benchStorage() {
+  setCardState('storage', 'running');
+  setStatus('storage', '● Running...');
+  log('Storage (IndexedDB) test started');
+  await sleep(50);
+  try {
+    const DATA_SIZE = 200_000;
+    const data = new Uint8Array(DATA_SIZE);
+    crypto.getRandomValues(data);
+    const start = performance.now();
+    const db = await new Promise((res, rej) => {
+      const req = indexedDB.open('benchforge_test', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('bench');
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = rej;
+    });
+    const ITER = 30;
+    for (let i = 0; i < ITER; i++) {
+      await new Promise((res, rej) => {
+        const tx = db.transaction('bench', 'readwrite');
+        tx.objectStore('bench').put(data.slice(), 'key' + i);
+        tx.oncomplete = res; tx.onerror = rej;
+      });
+    }
+    for (let i = 0; i < ITER; i++) {
+      await new Promise((res, rej) => {
+        const tx = db.transaction('bench', 'readonly');
+        const req = tx.objectStore('bench').get('key' + i);
+        req.onsuccess = res; req.onerror = rej;
+      });
+    }
+    db.close();
+    indexedDB.deleteDatabase('benchforge_test');
+    const elapsed = performance.now() - start;
+    const throughputMB = ((DATA_SIZE * ITER * 2) / (elapsed / 1000)) / 1_000_000;
+    const score = Math.round(Math.max(100, Math.min(10000, throughputMB * 300)));
+    scores.storage = score;
+    setScore('storage', score, 'pts', score / 100);
+    setStatus('storage', `✓ Done · ${throughputMB.toFixed(1)} MB/s`);
+    setCardState('storage', 'done');
+    log(`Storage: ${score.toLocaleString()} pts (${throughputMB.toFixed(1)} MB/s)`, 'ok');
+    return score;
+  } catch (e) {
+    const score = 2000;
+    scores.storage = score;
+    setScore('storage', score, 'pts', score / 100);
+    setStatus('storage', '⚠ Limited access');
+    setCardState('storage', 'done');
+    log('Storage: IndexedDB limited, fallback score assigned', 'warn');
+    return score;
+  }
+}
+
+// ─ Crypto / Hash Benchmark ─
+async function benchCrypto() {
+  setCardState('crypto', 'running');
+  setStatus('crypto', '● Running...');
+  log('Crypto / SHA-256 hash test started');
+  await sleep(50);
+  try {
+    const ITER = 1000;
+    const data = new TextEncoder().encode('BenchForge_Test_Payload_XYZ_' + Date.now());
+    const start = performance.now();
+    for (let i = 0; i < ITER; i++) {
+      await crypto.subtle.digest('SHA-256', data);
+    }
+    const elapsed = performance.now() - start;
+    const hashesPerSec = Math.round(ITER / (elapsed / 1000));
+    const score = Math.round(Math.max(100, Math.min(10000, hashesPerSec / 2)));
+    scores.crypto = score;
+    setScore('crypto', score, 'pts', score / 100);
+    setStatus('crypto', `✓ Done · ${hashesPerSec.toLocaleString()} H/s`);
+    setCardState('crypto', 'done');
+    log(`Crypto: ${score.toLocaleString()} pts (${hashesPerSec.toLocaleString()} SHA-256/s)`, 'ok');
+    return score;
+  } catch (e) {
+    const score = 3000;
+    scores.crypto = score;
+    setScore('crypto', score, 'pts', score / 100);
+    setStatus('crypto', '⚠ WebCrypto unavailable');
+    setCardState('crypto', 'done');
+    log('Crypto: WebCrypto API unavailable', 'warn');
+    return score;
+  }
+}
+
+// ─ Run All ───────────────────────────────────────────────────────────────────
+async function runAllBenchmarks() {
+  if (running) return;
+  running = true;
+  const btn = document.getElementById('run-all-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Running...';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('total-score').textContent = '—';
+  log('═══ BenchForge Suite Started ═══', 'info');
+
+  await benchCPU();    await sleep(200);
+  await benchFloat();  await sleep(200);
+  await benchMemory(); await sleep(200);
+  await benchGPU();    await sleep(200);
+  await benchStorage();await sleep(200);
+  await benchCrypto(); await sleep(200);
+
+  finalize();
+  btn.disabled = false;
+  btn.innerHTML = '▶ Run All Tests';
+  running = false;
+}
+
+async function runSingle(id) {
+  if (running) return;
+  running = true;
+  const fns = { cpu: benchCPU, float: benchFloat, mem: benchMemory, gpu: benchGPU, storage: benchStorage, crypto: benchCrypto };
+  await fns[id]();
+  running = false;
+  // Update total if all done
+  const allDone = Object.values(scores).every(s => s > 0);
+  if (allDone) finalize();
+}
+
+function finalize() {
+  const vals = Object.values(scores);
+  const total = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  document.getElementById('total-score').textContent = total.toLocaleString();
+  log(`═══ Suite Complete · Overall Score: ${total.toLocaleString()} ═══`, 'ok');
+  showResults(total);
+}
+
+function getRating(score) {
+  if (score >= 8000) return 'S';
+  if (score >= 6000) return 'A';
+  if (score >= 4000) return 'B';
+  return 'C';
+}
+
+function showResults(total) {
+  const sec = document.getElementById('results-section');
+  sec.style.display = 'block';
+  const colors = {
+    cpu: '#3d8bff', float: '#5540ff', mem: '#00e5c3',
+    gpu: '#ff5e5e', storage: '#f0c040', crypto: '#c084fc'
+  };
+  const labels = { cpu: 'CPU Int', float: 'CPU Flt', mem: 'Memory', gpu: 'GPU', storage: 'Storage', crypto: 'Crypto' };
+  document.getElementById('radar-bars').innerHTML = Object.entries(scores).map(([k, v]) => `
+    <div class="radar-bar-row">
+      <span class="radar-label">${labels[k]}</span>
+      <div class="radar-track">
+        <div class="radar-fill" id="rf-${k}" style="background:${colors[k]};width:0%"></div>
+      </div>
+      <span class="radar-val">${v.toLocaleString()}</span>
+    </div>
+  `).join('');
+
+  setTimeout(() => {
+    Object.entries(scores).forEach(([k, v]) => {
+      document.getElementById('rf-' + k).style.width = (v / 100) + '%';
+    });
+  }, 100);
+
+  const rating = getRating(total);
+  const ratingClasses = { S: 'rating-s', A: 'rating-a', B: 'rating-b', C: 'rating-c' };
+  const ratingLabels = { S: '🏆 S Tier — Exceptional', A: '⭐ A Tier — High Performance', B: '✓ B Tier — Good', C: '△ C Tier — Average' };
+  document.getElementById('rating-display').innerHTML = `<span class="rating-badge ${ratingClasses[rating]}">${ratingLabels[rating]}</span>`;
+  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyResults() {
+  const lines = [
+    'BenchForge Results',
+    '══════════════════',
+    ...Object.entries(scores).map(([k, v]) => `${k.padEnd(10)}: ${v.toLocaleString()}`),
+    '──────────────────',
+    `Total: ${Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length).toLocaleString()}`,
+    `Rating: ${getRating(Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length))}`,
+  ];
+  navigator.clipboard.writeText(lines.join('\n')).then(() => log('Results copied to clipboard', 'ok'));
+}
+
+function shareResults() {
+  const params = new URLSearchParams();
+  Object.entries(scores).forEach(([k, v]) => params.set(k, v));
+  const url = location.href.split('?')[0] + '?' + params;
+  navigator.clipboard.writeText(url).then(() => log('Share link copied to clipboard', 'ok'));
+}
+
+function addToLeaderboard() {
+  const device = navigator.platform || 'Unknown Device';
+  const gpu = getGPUInfo().slice(0, 30);
+  const total = Math.round(Object.values(scores).reduce((a,b)=>a+b,0) / Object.values(scores).length);
+  leaderboard.push({
+    device: device + (gpu ? ' / ' + gpu : ''),
+    cpu: scores.cpu,
+    gpu: scores.gpu,
+    total,
+    rating: getRating(total)
+  });
+  renderLeaderboard();
+  log('Score submitted to leaderboard!', 'ok');
+  document.getElementById('leaderboard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetAll() {
+  ['cpu','float','mem','gpu','storage','crypto'].forEach(id => {
+    document.getElementById('card-' + id).className = 'bench-card';
+    document.getElementById('score-' + id).textContent = '—';
+    document.getElementById('score-' + id).className = 'bench-score pending';
+    document.getElementById('unit-' + id).textContent = 'pts';
+    document.getElementById('bar-' + id).style.width = '0%';
+    document.getElementById('status-' + id).textContent = 'Waiting';
+    scores[id] = 0;
+  });
+  document.getElementById('total-score').textContent = '—';
+  document.getElementById('results-section').style.display = 'none';
+  log('Reset complete. Ready for new run.', 'info');
+}
+
+// ─ Load from URL params (share link) ─
+(function() {
+  const params = new URLSearchParams(location.search);
+  const keys = ['cpu','float','mem','gpu','storage','crypto'];
+  if (keys.some(k => params.get(k))) {
+    keys.forEach(k => {
+      const v = parseInt(params.get(k));
+      if (v > 0) {
+        scores[k] = v;
+        setScore(k, v, 'pts', v / 100);
+        setStatus(k, '✓ Loaded from link');
+        setCardState(k, 'done');
+      }
+    });
+    finalize();
+    log('Scores loaded from shared link', 'ok');
+  }
+})();
+</script>
+</body>
+</html>
