@@ -320,10 +320,95 @@
   animate();
   document.addEventListener('mousemove',e=>{const x=(e.clientX/innerWidth-0.5)*0.8;const y=(e.clientY/innerHeight-0.5)*-0.5;camera.position.x+=(x-camera.position.x)*0.04;camera.position.y+=(y-camera.position.y)*0.04;camera.lookAt(0,0,0)});
 })();
-function getSystemInfo(){const nav=navigator;const info=[['Browser',nav.userAgent.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)?.[0]||nav.userAgent.slice(0,40)],['Platform',nav.platform||navigator.userAgentData?.platform||'Unknown'],['CPU Cores',navigator.hardwareConcurrency||'Unknown'],['Device Memory',navigator.deviceMemory?navigator.deviceMemory+' GB (estimated)':'Unknown'],['Screen',`${screen.width}×${screen.height} @ ${screen.colorDepth}bpp`],['GPU (WebGL)',getGPUInfo()],['Language',nav.language],['Connection',navigator.connection?.effectiveType||'Unknown'],['Timezone',Intl.DateTimeFormat().resolvedOptions().timeZone],['JS Engine',detectJSEngine()],['WebGL2',!!document.createElement('canvas').getContext('webgl2')?'Supported ✓':'Not supported'],['WebAssembly',typeof WebAssembly==='object'?'Supported ✓':'Not supported']];const grid=document.getElementById('sysinfo-grid');grid.innerHTML=info.map(([k,v])=>`<div class="sysinfo-item"><div class="sysinfo-key">${k}</div><div class="sysinfo-val">${v}</div></div>`).join('')}
-function getGPUInfo(){try{const c=document.createElement('canvas');const gl=c.getContext('webgl')||c.getContext('experimental-webgl');if(!gl)return'Unknown';const ext=gl.getExtension('WEBGL_debug_renderer_info');if(ext){const r=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);return(r||'Unknown').replace(/ANGLE \(/,'').replace(/\)/,'')}return'WebGL OK (renderer masked)'}catch(e){return'Unknown'}}
-function detectJSEngine(){if(/Chrome/.test(navigator.userAgent))return'V8 (Chrome)';if(/Firefox/.test(navigator.userAgent))return'SpiderMonkey';if(/Safari/.test(navigator.userAgent))return'JavaScriptCore';return'Unknown'}
-getSystemInfo()
+async function getGPUInfo(){
+  try{
+    const canvas=document.createElement('canvas');
+    const contextNames=['webgl2','webgl','experimental-webgl'];
+    let gl=null;
+    for(const name of contextNames){
+      gl=canvas.getContext(name,{powerPreference:'high-performance'})||canvas.getContext(name);
+      if(gl)break;
+    }
+    if(!gl)return'Unknown';
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    let renderer='WebGL OK (renderer masked)';
+    if(ext){
+      const raw=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||gl.getParameter(gl.RENDERER);
+      if(raw)renderer=String(raw);
+    }else{
+      const raw=gl.getParameter(gl.RENDERER);
+      if(raw)renderer=String(raw);
+    }
+    try{
+      const lose=gl.getExtension&&gl.getExtension('WEBGL_lose_context');
+      if(lose&&typeof lose.loseContext==='function')lose.loseContext();
+    }catch(e){}
+    return renderer.replace(/\s+/g,' ').trim();
+  }catch(e){
+    return'Unknown';
+  }
+}
+async function getSystemInfo(){
+  const nav=navigator;
+  let browser=(nav.userAgent||'').slice(0,40);
+  const ua=nav.userAgent||'';
+  if(/Edg\/([\d.]+)/.test(ua)){
+    browser='Edge/'+ua.match(/Edg\/([\d.]+)/)[1];
+  }else if(/Chrome\/([\d.]+)/.test(ua)&&!/Edg\//.test(ua)){
+    browser='Chrome/'+ua.match(/Chrome\/([\d.]+)/)[1];
+  }else if(/Firefox\/([\d.]+)/.test(ua)){
+    browser='Firefox/'+ua.match(/Firefox\/([\d.]+)/)[1];
+  }else if(/Safari\/([\d.]+)/.test(ua)&&/Version\/([\d.]+)/.test(ua)){
+    browser='Safari/'+ua.match(/Version\/([\d.]+)/)[1];
+  }
+  let platform=nav.platform||(nav.userAgentData&&nav.userAgentData.platform)||'Unknown';
+  try{
+    if(nav.userAgentData&&typeof nav.userAgentData.getHighEntropyValues==='function'){
+      const high=await nav.userAgentData.getHighEntropyValues(['platform','bitness','architecture','model','uaFullVersion']);
+      if(high.uaFullVersion){
+        const brand=(nav.userAgentData.brands||nav.userAgentData.uaList||[]).map(b=>b.brand+'/'+b.version).join(' ');
+        browser=(brand||browser)+(high.uaFullVersion?' / '+high.uaFullVersion:'');
+      }
+      platform=high.platform||platform;
+      if(high.architecture&&high.architecture!=='unknown')platform+=` (${high.architecture})`;
+    }
+  }catch(e){}
+  const cpuCores=nav.hardwareConcurrency||'Unknown';
+  const deviceMemory=nav.deviceMemory?nav.deviceMemory+' GB (estimated)':'Unknown';
+  const screenInfo=`${screen.width}×${screen.height} @ ${screen.colorDepth}bpp`;
+  const gpuStr=await getGPUInfo();
+  const language=nav.language||'Unknown';
+  const connection=nav.connection?.effectiveType||nav.connection?.type||'Unknown';
+  let timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'Unknown';
+  if(timezone==='Asia/Calcutta')timezone='Asia/Kolkata';
+  const jsEngine=detectJSEngine();
+  const webgl2=!!document.createElement('canvas').getContext('webgl2')?'Supported ✓':'Not supported';
+  const webasm=typeof WebAssembly==='object'?'Supported ✓':'Not supported';
+  const info=[
+    ['Browser',browser],
+    ['Platform',platform],
+    ['CPU Cores',cpuCores],
+    ['Device Memory',deviceMemory],
+    ['Screen',screenInfo],
+    ['GPU (WebGL)',gpuStr],
+    ['Language',language],
+    ['Connection',connection],
+    ['Timezone',timezone],
+    ['JS Engine',jsEngine],
+    ['WebGL2',webgl2],
+    ['WebAssembly',webasm]
+  ];
+  const grid=document.getElementById('sysinfo-grid');
+  grid.innerHTML=info.map(([k,v])=>`<div class="sysinfo-item"><div class="sysinfo-key">${k}</div><div class="sysinfo-val">${v}</div></div>`).join('');
+}
+function detectJSEngine(){
+  const ua=navigator.userAgent||'';
+  if(/Edg\/|Chrome\/|Chromium\//.test(ua))return'V8 (Chromium)';
+  if(/Firefox\//.test(ua))return'SpiderMonkey (Firefox)';
+  if(/Safari\//.test(ua)&&/Version\//.test(ua))return'JavaScriptCore (Safari)';
+  return'Unknown';
+}
+getSystemInfo();
 function log(msg,type='info'){const el=document.getElementById('log-output');const ts=new Date().toLocaleTimeString();const cls={ok:'log-ok',info:'log-info',warn:'log-warn'}[type]||'';el.innerHTML+=`\n<span class="${cls}">[${ts}] ${msg}</span>`;el.scrollTop=el.scrollHeight}
 function clearLog(){document.getElementById('log-output').innerHTML='<span class="log-info">[BenchForge] Log cleared.</span>'}
 function showToast(msg,ms=3000){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
@@ -336,10 +421,15 @@ try{
 }catch(e){leaderboard=[]}
 let runs=Number(localStorage.getItem('bf_runs')||0)
 document.getElementById('runCount').textContent=runs
-function renderLeaderboard(){if(!leaderboard||!leaderboard.length){document.getElementById('leaderboard-body').innerHTML='<tr><td colspan="6" style="color:var(--muted);font-family:var(--font)">No saved scores yet</td></tr>';return}
+function renderLeaderboard(){
+  if(!leaderboard||!leaderboard.length){
+    document.getElementById('leaderboard-body').innerHTML='<tr><td colspan="6" style="color:var(--muted);font-family:var(--font)">No saved scores yet</td></tr>';
+    return
+  }
   const sorted=[...leaderboard].sort((a,b)=>b.total-a.total)
   const ratingColor={S:'#00e5c3',A:'#3d8bff',B:'#f0c040',C:'#ff5e5e'}
-  document.getElementById('leaderboard-body').innerHTML=sorted.map((row,i)=>{const rankClass=i<3?`rank-${i+1}`:'rank-n';return`<tr><td><span class="rank-badge ${rankClass}">${i+1}</span></td><td style="font-family:var(--font);color:var(--text)">${row.device}</td><td>${row.cpu.toLocaleString()}</td><td>${row.gpu.toLocaleString()}</td><td style="color:var(--accent2);font-weight:700">${row.total.toLocaleString()}</td><td><span style="color:${ratingColor[row.rating]};font-weight:700">${row.rating}</span></td></tr>`}).join('')}
+  document.getElementById('leaderboard-body').innerHTML=sorted.map((row,i)=>{const rankClass=i<3?`rank-${i+1}`:'rank-n';return`<tr><td><span class="rank-badge ${rankClass}">${i+1}</span></td><td style="font-family:var(--font);color:var(--text)">${row.device}</td><td>${row.cpu.toLocaleString()}</td><td>${row.gpu.toLocaleString()}</td><td style="color:var(--accent2);font-weight:700">${row.total.toLocaleString()}</td><td><span style="color:${ratingColor[row.rating]};font-weight:700">${row.rating}</span></td></tr>`}).join('')
+}
 renderLeaderboard()
 function setCardState(id,state){const card=document.getElementById('card-'+id);card.className='bench-card '+state}
 function setScore(id,score,unit,pct){const el=document.getElementById('score-'+id);el.textContent=score.toLocaleString();el.className='bench-score';document.getElementById('unit-'+id).textContent=unit;setTimeout(()=>{document.getElementById('bar-'+id).style.width=Math.min(pct,100)+'%'},100)}
@@ -384,7 +474,7 @@ function getRating(score){if(score>=8000)return'S';if(score>=6000)return'A';if(s
 function showResults(total){const sec=document.getElementById('results-section');sec.style.display='block';const colors={cpu:'#3d8bff',float:'#5540ff',mem:'#00e5c3',gpu:'#ff5e5e',storage:'#f0c040',crypto:'#c084fc'};const labels={cpu:'CPU Int',float:'CPU Flt',mem:'Memory',gpu:'GPU',storage:'Storage',crypto:'Crypto'};document.getElementById('radar-bars').innerHTML=Object.entries(scores).map(([k,v])=>`<div class="radar-bar-row"><span class="radar-label">${labels[k]}</span><div class="radar-track"><div class="radar-fill" id="rf-${k}" style="background:${colors[k]};width:0%"></div></div><span class="radar-val">${v.toLocaleString()}</span></div>`).join('');setTimeout(()=>{Object.entries(scores).forEach(([k,v])=>{document.getElementById('rf-'+k).style.width=(v/100)+'%'})},100);const rating=getRating(total);const ratingClasses={S:'rating-s',A:'rating-a',B:'rating-b',C:'rating-c'};const ratingLabels={S:'🏆 S Tier — Exceptional',A:'⭐ A Tier — High Performance',B:'✓ B Tier — Good',C:'△ C Tier — Average'};document.getElementById('rating-display').innerHTML=`<span class="rating-badge ${ratingClasses[rating]}">${ratingLabels[rating]}</span>`;sec.scrollIntoView({behavior:'smooth',block:'nearest'})}
 function copyResults(){const lines=['BenchForge Results','══════════════════',...Object.entries(scores).map(([k,v])=>`${k.padEnd(10)}: ${v.toLocaleString()}`),'──────────────────',`Total: ${Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length).toLocaleString()}`,`Rating: ${getRating(Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length))}`];navigator.clipboard.writeText(lines.join('\n')).then(()=>{log('Results copied to clipboard','ok');showToast('Results copied to clipboard')})}
 async function shareResults(){const total=document.getElementById('total-score').textContent;const params=new URLSearchParams();Object.entries(scores).forEach(([k,v])=>params.set(k,v));const url=location.href.split('?')[0]+'?'+params;const shareData={title:"BenchForge Benchmark",text:`My BenchForge score is ${total}`,url:url};try{if(navigator.share){await navigator.share(shareData);log('Shared via native share','ok')}else{await navigator.clipboard.writeText(shareData.url);log('Share link copied to clipboard','ok');showToast('Share link copied to clipboard')}}catch(e){await navigator.clipboard.writeText(shareData.url).catch(()=>{});log('Share fallback copied to clipboard','warn');showToast('Unable to open native share — link copied')}}
-function addToLeaderboard(){const device=navigator.platform||'Unknown Device';const gpu=getGPUInfo().slice(0,30);const total=Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length);const entry={device:device+(gpu?' / '+gpu:''),cpu:scores.cpu,gpu:scores.gpu,total,rating:getRating(total)};leaderboard.push(entry);try{localStorage.setItem('benchforgeLeaderboard',JSON.stringify(leaderboard));renderLeaderboard();log('Score submitted to leaderboard!','ok');showToast('Score saved to leaderboard');document.getElementById('leaderboard').scrollIntoView({behavior:'smooth'})}catch(e){log('Unable to save leaderboard locally','warn');showToast('Error saving leaderboard')}}
+async function addToLeaderboard(){const device=navigator.platform||'Unknown Device';const gpu=(await getGPUInfo()).slice(0,30);const total=Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length);const entry={device:device+(gpu?' / '+gpu:''),cpu:scores.cpu,gpu:scores.gpu,total,rating:getRating(total)};leaderboard.push(entry);try{localStorage.setItem('benchforgeLeaderboard',JSON.stringify(leaderboard));renderLeaderboard();log('Score submitted to leaderboard!','ok');showToast('Score saved to leaderboard');document.getElementById('leaderboard').scrollIntoView({behavior:'smooth'})}catch(e){log('Unable to save leaderboard locally','warn');showToast('Error saving leaderboard')}}
 function resetAll(){['cpu','float','mem','gpu','storage','crypto'].forEach(id=>{document.getElementById('card-'+id).className='bench-card';document.getElementById('score-'+id).textContent='—';document.getElementById('score-'+id).className='bench-score pending';document.getElementById('unit-'+id).textContent='pts';document.getElementById('bar-'+id).style.width='0%';document.getElementById('status-'+id).textContent='Waiting';scores[id]=0});document.getElementById('total-score').textContent='—';document.getElementById('results-section').style.display='none';log('Reset complete. Ready for new run.','info')}
 function exportJSON(){const blob=new Blob([JSON.stringify(scores,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='benchforge-results.json';a.click();URL.revokeObjectURL(a.href);log('Results exported as JSON','ok');showToast('JSON exported')}
 (function(){const params=new URLSearchParams(location.search);const keys=['cpu','float','mem','gpu','storage','crypto'];if(keys.some(k=>params.get(k))){keys.forEach(k=>{const v=parseInt(params.get(k));if(v>0){scores[k]=v;setScore(k,v,'pts',v/100);setStatus(k,'✓ Loaded from link');setCardState(k,'done')}});finalize();log('Scores loaded from shared link','ok')}})();
