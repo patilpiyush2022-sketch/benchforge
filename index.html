@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BenchForge — PC Performance Tester</title>
 <style>
   :root {
@@ -28,7 +28,7 @@
     overflow-x: hidden;
   }
 
-  /* NAV */
+  
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -44,8 +44,17 @@
     font-weight: 700;
     color: var(--accent);
     letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 0.75rem;
   }
   .logo span { color: var(--accent2); }
+  .version-badge{
+    background:#141c2e;
+    color:var(--accent2);
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:.7rem;
+    border:1px solid var(--border);
+  }
   nav ul {
     display: flex; gap: 1.5rem; list-style: none;
   }
@@ -59,7 +68,7 @@
   }
   nav a:hover { color: var(--text); }
 
-  /* HERO */
+  
   #hero {
     position: relative;
     height: 100vh;
@@ -130,7 +139,6 @@
     50% { transform: translateX(-50%) translateY(6px); }
   }
 
-  /* SECTIONS */
   section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
   .section-label {
     font-family: var(--mono);
@@ -154,7 +162,7 @@
     margin-bottom: 3rem;
   }
 
-  /* BENCHMARK CARDS */
+  
   .bench-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -234,7 +242,7 @@
   .bench-card.done .bench-status { color: var(--accent2); }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
-  /* CONTROL ROW */
+  
   .controls {
     display: flex; gap: 1rem; align-items: center; margin-bottom: 3rem;
     flex-wrap: wrap;
@@ -277,7 +285,7 @@
     color: var(--accent2);
   }
 
-  /* LOG */
+  
   .log-section { margin-top: 2rem; }
   .log-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -300,7 +308,6 @@
   #log-output .log-info { color: var(--accent); }
   #log-output .log-warn { color: #f0c040; }
 
-  /* GPU CANVAS */
   #gpu-test-canvas {
     border-radius: 8px;
     display: none;
@@ -346,7 +353,6 @@
   }
   .radar-val { font-family: var(--mono); font-size: 0.8rem; width: 60px; text-align: right; color: var(--text); }
 
-  /* SYSTEM INFO */
   .sysinfo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -372,7 +378,6 @@
     color: var(--text);
   }
 
-  /* RATING BADGE */
   .rating-badge {
     display: inline-flex; align-items: center; gap: 0.5rem;
     padding: 0.4rem 1rem;
@@ -385,7 +390,6 @@
   .rating-b { background: rgba(240,192,64,0.1); color: #f0c040; border-color: rgba(240,192,64,0.3); }
   .rating-c { background: rgba(255,94,94,0.1); color: var(--accent3); border-color: rgba(255,94,94,0.3); }
 
-  /* FOOTER */
   footer {
     border-top: 1px solid var(--border);
     padding: 2rem;
@@ -395,7 +399,7 @@
     line-height: 1.8;
   }
 
-  /* SPINNER */
+
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner {
     width: 14px; height: 14px;
@@ -406,7 +410,7 @@
     display: inline-block;
   }
 
-  /* TOOLTIP */
+  
   .tooltip { position: relative; display: inline-block; cursor: help; }
   .tooltip .tip {
     display: none;
@@ -422,7 +426,6 @@
   }
   .tooltip:hover .tip { display: block; }
 
-  /* SHARE / EXPORT */
   .share-row {
     display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;
   }
@@ -438,7 +441,7 @@
   }
   .btn-export:hover { color: var(--text); border-color: rgba(99,161,255,0.4); }
 
-  /* LEADERBOARD */
+  
   .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
@@ -472,7 +475,43 @@
   .rank-3 { background: rgba(200,120,60,0.2); color: #c8783c; }
   .rank-n { background: var(--surface2); color: var(--muted); }
 
-  /* SCROLLBAR */
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .stat-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-family: var(--mono);
+  }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; display:block; }
+  .stat-value { font-size: 1.1rem; color: var(--text); font-weight:700; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 28px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    z-index: 120;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    opacity: 0;
+    animation: toast-in 0.18s forwards;
+  }
+  @keyframes toast-in { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--surface); }
   ::-webkit-scrollbar-thumb { background: #2a3a55; border-radius: 3px; }
@@ -489,7 +528,10 @@
 <body>
 
 <nav>
-  <div class="logo">Bench<span>Forge</span></div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <div class="logo">Bench<span>Forge</span></div>
+    <div class="version-badge">v0.9 Beta</div>
+  </div>
   <ul>
     <li><a href="#benchmark">Benchmark</a></li>
     <li><a href="#system">System</a></li>
@@ -497,7 +539,7 @@
   </ul>
 </nav>
 
-<!-- HERO -->
+
 <section id="hero" style="max-width:none;padding:0;">
   <canvas id="three-canvas"></canvas>
   <div class="hero-content">
@@ -512,7 +554,7 @@
   </div>
 </section>
 
-<!-- BENCHMARK -->
+
 <section id="benchmark">
   <p class="section-label">Performance Tests</p>
   <h2>Run Your Benchmark</h2>
@@ -530,7 +572,7 @@
   </div>
 
   <div class="bench-grid">
-    <!-- CPU -->
+ 
     <div class="bench-card" id="card-cpu">
       <div class="bench-icon">🧮</div>
       <div class="bench-name">CPU · Integer</div>
@@ -542,7 +584,7 @@
       <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('cpu')">Run solo</button>
     </div>
 
-    <!-- FLOAT -->
+   
     <div class="bench-card" id="card-float">
       <div class="bench-icon">📐</div>
       <div class="bench-name">CPU · Float</div>
@@ -554,7 +596,7 @@
       <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('float')">Run solo</button>
     </div>
 
-    <!-- MEMORY -->
+  
     <div class="bench-card" id="card-mem">
       <div class="bench-icon">🧠</div>
       <div class="bench-name">Memory</div>
@@ -566,7 +608,6 @@
       <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('mem')">Run solo</button>
     </div>
 
-    <!-- GPU -->
     <div class="bench-card" id="card-gpu">
       <div class="bench-icon">🎮</div>
       <div class="bench-name">GPU · Canvas</div>
@@ -578,7 +619,7 @@
       <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('gpu')">Run solo</button>
     </div>
 
-    <!-- STORAGE -->
+   
     <div class="bench-card" id="card-storage">
       <div class="bench-icon">💾</div>
       <div class="bench-name">Storage</div>
@@ -590,7 +631,7 @@
       <button class="btn-secondary" style="width:100%;font-size:0.78rem;padding:0.5rem" onclick="runSingle('storage')">Run solo</button>
     </div>
 
-    <!-- CRYPTO -->
+    
     <div class="bench-card" id="card-crypto">
       <div class="bench-icon">🔐</div>
       <div class="bench-name">Crypto / Hash</div>
@@ -603,10 +644,9 @@
     </div>
   </div>
 
-  <!-- GPU test canvas (hidden) -->
+  
   <canvas id="gpu-test-canvas"></canvas>
 
-  <!-- LOG -->
   <div class="log-section">
     <div class="log-header">
       <span class="log-title">⬛ Test Log</span>
@@ -615,7 +655,7 @@
     <div id="log-output"><span class="log-info">[BenchForge] Ready. Click Run All Tests to begin.</span></div>
   </div>
 
-  <!-- RESULTS -->
+
   <div class="results-section" id="results-section">
     <div class="results-title">Score Breakdown</div>
     <div id="radar-bars"></div>
@@ -623,26 +663,36 @@
       <span id="rating-display"></span>
       <button class="btn-export" onclick="copyResults()">📋 Copy Results</button>
       <button class="btn-export" onclick="shareResults()">🔗 Share Link</button>
+      <button class="btn-export" onclick="exportJSON()">💾 Export JSON</button>
       <button class="btn-export" onclick="addToLeaderboard()">🏆 Submit Score</button>
     </div>
   </div>
 </section>
 
-<!-- SYSTEM INFO -->
+
 <section id="system" style="border-top: 1px solid var(--border);">
   <p class="section-label">System</p>
   <h2>Detected Hardware</h2>
   <p class="section-desc">Information extracted from your browser environment. Some values are estimated due to browser security sandboxing.</p>
   <div class="sysinfo-grid" id="sysinfo-grid">
-    <!-- populated by JS -->
+  </div>
+</section>
+<section id="analytics" style="border-top: 1px solid var(--border);">
+  <p class="section-label">Analytics</p>
+  <h2>Benchmark Analytics</h2>
+  <p class="section-desc">Local metrics collected on this device.</p>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-label">Total Runs</div>
+      <div class="stat-value" id="runCount">0</div>
+    </div>
   </div>
 </section>
 
-<!-- LEADERBOARD -->
 <section id="leaderboard" style="border-top: 1px solid var(--border);">
   <p class="section-label">Leaderboard</p>
   <h2>Top Scores</h2>
-  <p class="section-desc">Scores submitted by users in this session. Submit your score after benchmarking to appear here.</p>
+  <p class="section-desc" id="leaderboard-desc">Scores saved locally on this device.</p>
   <table class="leaderboard-table">
     <thead>
       <tr>
@@ -655,9 +705,24 @@
       </tr>
     </thead>
     <tbody id="leaderboard-body">
-      <!-- populated by JS -->
+    
     </tbody>
   </table>
+</section>
+
+<section id="faq" style="border-top: 1px solid var(--border);">
+  <p class="section-label">FAQ</p>
+  <h2>How BenchForge Works</h2>
+  <p class="section-desc">Answers to common questions.</p>
+  <details>
+    <summary>How are scores calculated?</summary>
+    <p>BenchForge measures execution speed of CPU, memory, storage and graphics workloads and maps them to a 0–10,000 scale using heuristics intended to be comparable on the same browser engine. Results are approximate and intended for relative comparisons.</p>
+  </details>
+
+  <details>
+    <summary>Are scores comparable?</summary>
+    <p>Scores are best used for comparing systems running the same browser and version. Browser scheduling, background tasks, and power settings can affect results.</p>
+  </details>
 </section>
 
 <footer>
@@ -667,11 +732,11 @@
   <a href="https://pages.github.com" style="color:var(--accent);text-decoration:none">GitHub Pages</a> — just drop the index.html file.
 </footer>
 
-<!-- THREE.JS -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-// ─── 3D HERO SCENE ───────────────────────────────────────────────────────────
+
 (function() {
   const canvas = document.getElementById('three-canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -681,24 +746,23 @@
   const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
   camera.position.z = 5;
 
-  // Grid
+
   const gridHelper = new THREE.GridHelper(30, 40, 0x1a2840, 0x0e1820);
   gridHelper.position.y = -2.5;
   scene.add(gridHelper);
 
-  // Floating wireframe torus
+
   const torusGeo = new THREE.TorusKnotGeometry(1.3, 0.35, 128, 32);
   const torusMat = new THREE.MeshBasicMaterial({ color: 0x3d8bff, wireframe: true, opacity: 0.3, transparent: true });
   const torus = new THREE.Mesh(torusGeo, torusMat);
   scene.add(torus);
 
-  // Inner solid torus (accent)
   const torusGeo2 = new THREE.TorusKnotGeometry(1.3, 0.12, 128, 32);
   const torusMat2 = new THREE.MeshBasicMaterial({ color: 0x00e5c3, opacity: 0.15, transparent: true });
   const torus2 = new THREE.Mesh(torusGeo2, torusMat2);
   scene.add(torus2);
 
-  // Particles
+
   const pCount = 600;
   const pGeo = new THREE.BufferGeometry();
   const pPos = new Float32Array(pCount * 3);
@@ -708,7 +772,7 @@
   const particles = new THREE.Points(pGeo, pMat);
   scene.add(particles);
 
-  // Ambient rings
+
   for (let i = 0; i < 3; i++) {
     const rGeo = new THREE.TorusGeometry(2.2 + i * 0.5, 0.01, 2, 64);
     const rMat = new THREE.MeshBasicMaterial({ color: [0x3d8bff, 0x00e5c3, 0x5540ff][i], opacity: 0.12, transparent: true });
@@ -717,10 +781,8 @@
     scene.add(ring);
   }
 
-  let frame = 0;
   function animate() {
     requestAnimationFrame(animate);
-    frame++;
     torus.rotation.x += 0.004;
     torus.rotation.y += 0.006;
     torus2.rotation.x -= 0.003;
@@ -738,7 +800,7 @@
   resize();
   animate();
 
-  // Mouse parallax
+
   document.addEventListener('mousemove', e => {
     const x = (e.clientX / innerWidth - 0.5) * 0.8;
     const y = (e.clientY / innerHeight - 0.5) * -0.5;
@@ -748,7 +810,7 @@
   });
 })();
 
-// ─── SYSTEM INFO ─────────────────────────────────────────────────────────────
+
 function getSystemInfo() {
   const nav = navigator;
   const info = [
@@ -782,7 +844,7 @@ function getGPUInfo() {
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     if (ext) {
       const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
-      return renderer.replace(/ANGLE \(/, '').replace(/\)/, '') || 'Unknown';
+      return (renderer || 'Unknown').replace(/ANGLE \(/, '').replace(/\)/, '');
     }
     return 'WebGL OK (renderer masked)';
   } catch(e) { return 'Unknown'; }
@@ -797,7 +859,7 @@ function detectJSEngine() {
 
 getSystemInfo();
 
-// ─── LOGGING ─────────────────────────────────────────────────────────────────
+
 function log(msg, type = 'info') {
   const el = document.getElementById('log-output');
   const ts = new Date().toLocaleTimeString();
@@ -809,19 +871,36 @@ function clearLog() {
   document.getElementById('log-output').innerHTML = '<span class="log-info">[BenchForge] Log cleared.</span>';
 }
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
+
+function showToast(msg, ms = 3000) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, ms);
+}
+
+
 const scores = { cpu: 0, float: 0, mem: 0, gpu: 0, storage: 0, crypto: 0 };
 const maxScores = { cpu: 10000, float: 10000, mem: 10000, gpu: 10000, storage: 10000, crypto: 10000 };
 let running = false;
 
-// Seed leaderboard
-const leaderboard = [
+const savedBoard = JSON.parse(localStorage.getItem("benchforgeLeaderboard") || "null") || [];
+const defaultBoard = [
   { device: 'MacBook Pro M3 Max', cpu: 9800, gpu: 9200, total: 9500, rating: 'S' },
   { device: 'ASUS ROG Strix (i9-13900)', cpu: 9500, gpu: 9600, total: 9550, rating: 'S' },
   { device: 'Dell XPS 15 (i7-13700H)', cpu: 8800, gpu: 7400, total: 8100, rating: 'A' },
   { device: 'ThinkPad X1 Carbon (i7)', cpu: 7200, gpu: 5800, total: 6500, rating: 'B' },
   { device: 'Surface Pro 9 (i5)', cpu: 6400, gpu: 5200, total: 5800, rating: 'B' },
 ];
+const leaderboard = savedBoard.length ? savedBoard : defaultBoard.slice();
+
+
+let runs = Number(localStorage.getItem("bf_runs") || 0);
+document.getElementById('runCount').textContent = runs;
+
 
 function renderLeaderboard() {
   const sorted = [...leaderboard].sort((a, b) => b.total - a.total);
@@ -841,7 +920,7 @@ function renderLeaderboard() {
 }
 renderLeaderboard();
 
-// ─── BENCHMARK ENGINE ─────────────────────────────────────────────────────────
+
 function setCardState(id, state) {
   const card = document.getElementById('card-' + id);
   card.className = 'bench-card ' + state;
@@ -861,30 +940,45 @@ function setStatus(id, msg) {
   document.getElementById('status-' + id).textContent = msg;
 }
 
-// Sleep helper
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// ─ CPU Integer Benchmark ─
+
 async function benchCPU() {
   setCardState('cpu', 'running');
   setStatus('cpu', '● Running...');
-  log('CPU Integer test started');
+  log('CPU Integer multi-pass test started');
   await sleep(50);
-  const start = performance.now();
-  let n = 0n;
-  const limit = 2000000n;
-  for (let i = 0n; i < limit; i++) { n += i * 3n - i / 2n; }
-  const elapsed = performance.now() - start;
-  const score = Math.round(Math.max(100, Math.min(10000, 1_200_000 / elapsed)));
+
+  async function cpuPass() {
+    const start = performance.now();
+    let n = 0n;
+    const limit = 2_000_000n;
+    for (let i = 0n; i < limit; i++) { n += i * 3n - i / 2n; }
+    const elapsed = performance.now() - start;
+    return elapsed;
+  }
+
+  const passes = 3;
+  const passTimes = [];
+  for (let p = 0; p < passes; p++) {
+    const t = await cpuPass();
+    passTimes.push(t);
+    log(`CPU integer pass ${p+1}: ${t.toFixed(0)}ms`, 'info');
+  
+    await sleep(40);
+  }
+
+  const avgElapsed = passTimes.reduce((a,b) => a+b, 0) / passTimes.length;
+  const score = Math.round(Math.max(100, Math.min(10000, 1_200_000 / avgElapsed)));
   scores.cpu = score;
   setScore('cpu', score, 'pts', score / 100);
-  setStatus('cpu', `✓ Done · ${elapsed.toFixed(0)}ms`);
+  setStatus('cpu', `✓ Done · ${avgElapsed.toFixed(0)}ms (avg)` );
   setCardState('cpu', 'done');
-  log(`CPU Integer: ${score.toLocaleString()} pts (${elapsed.toFixed(0)}ms)`, 'ok');
+  log(`CPU Integer (avg): ${score.toLocaleString()} pts (${avgElapsed.toFixed(0)}ms)`, 'ok');
   return score;
 }
 
-// ─ CPU Float Benchmark ─
 async function benchFloat() {
   setCardState('float', 'running');
   setStatus('float', '● Running...');
@@ -905,7 +999,6 @@ async function benchFloat() {
   return score;
 }
 
-// ─ Memory Bandwidth Benchmark ─
 async function benchMemory() {
   setCardState('mem', 'running');
   setStatus('mem', '● Running...');
@@ -928,7 +1021,6 @@ async function benchMemory() {
   return score;
 }
 
-// ─ GPU Canvas Benchmark ─
 async function benchGPU() {
   setCardState('gpu', 'running');
   setStatus('gpu', '● Running...');
@@ -937,7 +1029,8 @@ async function benchGPU() {
   const canvas = document.getElementById('gpu-test-canvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) {
-    // Fallback to 2D canvas test
+   
+    showToast('WebGL unavailable — using 2D fallback');
     const c = document.createElement('canvas');
     c.width = 1024; c.height = 1024;
     const ctx = c.getContext('2d');
@@ -958,36 +1051,46 @@ async function benchGPU() {
     return score;
   }
 
-  // WebGL triangle fill rate test
-  canvas.width = 512; canvas.height = 512;
-  const vs = `attribute vec2 p; void main(){ gl_Position=vec4(p,0,1); }`;
-  const fs = `precision mediump float; uniform float t; void main(){ gl_FragColor=vec4(sin(t),cos(t),0.5,1); }`;
-  const vsh = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vsh, vs); gl.compileShader(vsh);
-  const fsh = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fsh, fs); gl.compileShader(fsh);
-  const prog = gl.createProgram(); gl.attachShader(prog, vsh); gl.attachShader(prog, fsh); gl.linkProgram(prog); gl.useProgram(prog);
-  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1,-1,1,1,-1]), gl.STATIC_DRAW);
-  const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-  const tLoc = gl.getUniformLocation(prog, 't');
-  const FRAMES = 200;
-  const start = performance.now();
-  for (let i = 0; i < FRAMES; i++) {
-    gl.uniform1f(tLoc, i * 0.05);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    gl.flush();
+  try {
+    
+    canvas.width = 512; canvas.height = 512;
+    const vs = `attribute vec2 p; void main(){ gl_Position=vec4(p,0,1); }`;
+    const fs = `precision mediump float; uniform float t; void main(){ gl_FragColor=vec4(sin(t),cos(t),0.5,1); }`;
+    const vsh = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vsh, vs); gl.compileShader(vsh);
+    const fsh = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fsh, fs); gl.compileShader(fsh);
+    const prog = gl.createProgram(); gl.attachShader(prog, vsh); gl.attachShader(prog, fsh); gl.linkProgram(prog); gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1,-1,1,1,-1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tLoc = gl.getUniformLocation(prog, 't');
+    const FRAMES = 200;
+    const start = performance.now();
+    for (let i = 0; i < FRAMES; i++) {
+      gl.uniform1f(tLoc, i * 0.05);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      gl.flush();
+    }
+    const elapsed = performance.now() - start;
+    const fps = Math.round(FRAMES / (elapsed / 1000));
+    const score = Math.round(Math.max(100, Math.min(10000, fps * 8)));
+    scores.gpu = score;
+    setScore('gpu', score, 'pts', score / 100);
+    setStatus('gpu', `✓ Done · ${fps} fps`);
+    setCardState('gpu', 'done');
+    log(`GPU (WebGL): ${score.toLocaleString()} pts (${fps} fps)`, 'ok');
+    return score;
+  } catch (e) {
+    showToast('GPU test failed — fallback used');
+    log('GPU test failed, used fallback', 'warn');
+    const fallbackScore = 2000;
+    scores.gpu = fallbackScore;
+    setScore('gpu', fallbackScore, 'pts', fallbackScore / 100);
+    setStatus('gpu', '⚠ Error during WebGL test');
+    setCardState('gpu', 'done');
+    return fallbackScore;
   }
-  const elapsed = performance.now() - start;
-  const fps = Math.round(FRAMES / (elapsed / 1000));
-  const score = Math.round(Math.max(100, Math.min(10000, fps * 8)));
-  scores.gpu = score;
-  setScore('gpu', score, 'pts', score / 100);
-  setStatus('gpu', `✓ Done · ${fps} fps`);
-  setCardState('gpu', 'done');
-  log(`GPU (WebGL): ${score.toLocaleString()} pts (${fps} fps)`, 'ok');
-  return score;
 }
 
-// ─ Storage / IndexedDB Benchmark ─
 async function benchStorage() {
   setCardState('storage', 'running');
   setStatus('storage', '● Running...');
@@ -1036,12 +1139,12 @@ async function benchStorage() {
     setScore('storage', score, 'pts', score / 100);
     setStatus('storage', '⚠ Limited access');
     setCardState('storage', 'done');
+    showToast('IndexedDB limited — assigned fallback score');
     log('Storage: IndexedDB limited, fallback score assigned', 'warn');
     return score;
   }
 }
 
-// ─ Crypto / Hash Benchmark ─
 async function benchCrypto() {
   setCardState('crypto', 'running');
   setStatus('crypto', '● Running...');
@@ -1069,12 +1172,12 @@ async function benchCrypto() {
     setScore('crypto', score, 'pts', score / 100);
     setStatus('crypto', '⚠ WebCrypto unavailable');
     setCardState('crypto', 'done');
+    showToast('WebCrypto API unavailable — fallback score assigned');
     log('Crypto: WebCrypto API unavailable', 'warn');
     return score;
   }
 }
 
-// ─ Run All ───────────────────────────────────────────────────────────────────
 async function runAllBenchmarks() {
   if (running) return;
   running = true;
@@ -1093,6 +1196,11 @@ async function runAllBenchmarks() {
   await benchCrypto(); await sleep(200);
 
   finalize();
+
+  runs++;
+  localStorage.setItem("bf_runs", String(runs));
+  document.getElementById('runCount').textContent = runs;
+
   btn.disabled = false;
   btn.innerHTML = '▶ Run All Tests';
   running = false;
@@ -1104,10 +1212,11 @@ async function runSingle(id) {
   const fns = { cpu: benchCPU, float: benchFloat, mem: benchMemory, gpu: benchGPU, storage: benchStorage, crypto: benchCrypto };
   await fns[id]();
   running = false;
-  // Update total if all done
+
   const allDone = Object.values(scores).every(s => s > 0);
   if (allDone) finalize();
 }
+
 
 function finalize() {
   const vals = Object.values(scores);
@@ -1123,6 +1232,7 @@ function getRating(score) {
   if (score >= 4000) return 'B';
   return 'C';
 }
+
 
 function showResults(total) {
   const sec = document.getElementById('results-section');
@@ -1155,6 +1265,7 @@ function showResults(total) {
   sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+
 function copyResults() {
   const lines = [
     'BenchForge Results',
@@ -1164,15 +1275,37 @@ function copyResults() {
     `Total: ${Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length).toLocaleString()}`,
     `Rating: ${getRating(Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/Object.values(scores).length))}`,
   ];
-  navigator.clipboard.writeText(lines.join('\n')).then(() => log('Results copied to clipboard', 'ok'));
+  navigator.clipboard.writeText(lines.join('\n')).then(() => { log('Results copied to clipboard', 'ok'); showToast('Results copied to clipboard'); });
 }
 
-function shareResults() {
+
+async function shareResults() {
+  const total = document.getElementById('total-score').textContent;
   const params = new URLSearchParams();
   Object.entries(scores).forEach(([k, v]) => params.set(k, v));
   const url = location.href.split('?')[0] + '?' + params;
-  navigator.clipboard.writeText(url).then(() => log('Share link copied to clipboard', 'ok'));
+  const shareData = {
+    title: "BenchForge Benchmark",
+    text: `My BenchForge score is ${total}`,
+    url: url
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      log('Shared via native share', 'ok');
+    } else {
+      await navigator.clipboard.writeText(shareData.url);
+      log('Share link copied to clipboard', 'ok');
+      showToast('Share link copied to clipboard');
+    }
+  } catch (e) {
+    await navigator.clipboard.writeText(shareData.url).catch(()=>{});
+    log('Share fallback copied to clipboard', 'warn');
+    showToast('Unable to open native share — link copied');
+  }
 }
+
 
 function addToLeaderboard() {
   const device = navigator.platform || 'Unknown Device';
@@ -1185,9 +1318,17 @@ function addToLeaderboard() {
     total,
     rating: getRating(total)
   });
-  renderLeaderboard();
-  log('Score submitted to leaderboard!', 'ok');
-  document.getElementById('leaderboard').scrollIntoView({ behavior: 'smooth' });
+  
+  try {
+    localStorage.setItem("benchforgeLeaderboard", JSON.stringify(leaderboard));
+    renderLeaderboard();
+    log('Score submitted to leaderboard!', 'ok');
+    showToast('Score saved to leaderboard');
+    document.getElementById('leaderboard').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    log('Unable to save leaderboard locally', 'warn');
+    showToast('Error saving leaderboard');
+  }
 }
 
 function resetAll() {
@@ -1205,7 +1346,18 @@ function resetAll() {
   log('Reset complete. Ready for new run.', 'info');
 }
 
-// ─ Load from URL params (share link) ─
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(scores, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "benchforge-results.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log('Results exported as JSON', 'ok');
+  showToast('JSON exported');
+}
+
 (function() {
   const params = new URLSearchParams(location.search);
   const keys = ['cpu','float','mem','gpu','storage','crypto'];
